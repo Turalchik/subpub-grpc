@@ -1,6 +1,9 @@
 package subpub
 
-import "context"
+import (
+	"context"
+	"sync"
+)
 
 type MessageHandler func(msg interface{})
 
@@ -16,4 +19,9 @@ type SubPub interface {
 
 func NewSubPub() SubPub {
 	panic("err")
+}
+
+type subpub struct {
+	mu                    sync.Mutex
+	publisher2Subscribers map[string][]*subscriber
 }
