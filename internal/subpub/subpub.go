@@ -17,11 +17,17 @@ type SubPub interface {
 	Close(ctx context.Context) error
 }
 
-func NewSubPub() SubPub {
-	panic("err")
+type subpub struct {
+	wg       *sync.WaitGroup
+	mu       *sync.Mutex
+	closed   bool
+	pub2subs map[string][]*subscriber
 }
 
-type subpub struct {
-	mu                    sync.Mutex
-	publisher2Subscribers map[string][]*subscriber
+func NewSubPub() SubPub {
+	return &subpub{
+		wg:       &sync.WaitGroup{},
+		mu:       &sync.Mutex{},
+		pub2subs: make(map[string][]*subscriber),
+	}
 }

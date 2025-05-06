@@ -1,19 +1,24 @@
 package subpub
 
-import "github.com/Turalchik/subpub-grpc/internal/subscription"
+import (
+	"errors"
+	"github.com/Turalchik/subpub-grpc/internal/subscription"
+)
 
-func (subPub *subpub) Subscribe(subject string, msgHandler MessageHandler) (Subscription, error) {
+func (subPub *subpub) Subscribe(subject string, cb MessageHandler) (Subscription, error) {
 	subPub.mu.Lock()
 	defer subPub.mu.Unlock()
 
-	sub := newSubscriber(msgHandler)
-	subPub.publisher2Subscribers[subject] = append(subPub.publisher2Subscribers[subject], sub)
-
-	unsubscribeFunc := func() {
-		subPub.unsubscribe(subject, sub)
+	if subPub.closed {
+		return nil, errors.New("subpub is closed")
 	}
 
-	return &subscription.Subscription{
-		UnsubscribeFunc: unsubscribeFunc,
-	}, nil
+	sub := newSubscriber(cb, subPub.wg)
+	subPub.pub2subs[subject] = append(subPub.pub2subs[subject], sub)
+
+	unsubscribeFunc := func() {
+		subPub.Unsubscribe(subject, sub)
+	}
+
+	return &subscription.Subscription{UnsubscribeFunc: unsubscribeFunc}, nil
 }
